@@ -1,0 +1,1924 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo do Bebê - Loja Online de Roupa de Bebé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        turquesa: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        display: ['Quicksand', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .admin-page { display: none; }
+        .admin-page.active { display: block; }
+        .sidebar-item.active { background: linear-gradient(90deg, #14b8a6 0%, #0d9488 100%); color: white; }
+        .modal { display: none; }
+        .modal.active { display: flex; animation: modalFade 0.3s ease; }
+        @keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+        .toast { transform: translateX(100%); transition: transform 0.3s ease; }
+        .toast.show { transform: translateX(0); }
+        .product-card { transition: all 0.3s ease; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .size-btn { transition: all 0.2s; }
+        .size-btn:hover { border-color: #14b8a6; }
+        .size-btn.selected { background: #14b8a6; color: white; border-color: #14b8a6; }
+        .size-btn:disabled { opacity: 0.4; cursor: not-allowed; background: #f3f4f6; }
+        .quick-view-modal { backdrop-filter: blur(5px); }
+        .filter-checkbox:checked + div { background-color: #f0fdfa; border-color: #14b8a6; color: #0f766e; }
+        .sort-select { appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; }
+        .promo-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        .discount-input:focus { border-color: #14b8a6; ring: 2px solid #14b8a6; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast fixed top-5 right-5 bg-turquesa-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Operação realizada com sucesso!</span>
+    </div>
+
+    <!-- Modal Código de Desconto -->
+    <div id="discount-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Aplicar Código de Desconto</h3>
+                <button onclick="closeDiscountModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Código de Desconto</label>
+                    <input type="text" id="discount-code-input" placeholder="Ex: BEBE20" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 focus:ring-2 focus:ring-turquesa-200 outline-none uppercase">
+                </div>
+                <button onclick="applyDiscountCode()" class="w-full bg-turquesa-500 text-white py-3 rounded-lg font-bold hover:bg-turquesa-600 transition">
+                    Aplicar Desconto
+                </button>
+                <div id="available-codes" style="display:none" class="mt-4 pt-4 border-t border-gray-200">
+                    <p class="text-sm text-gray-500 mb-2">Códigos disponíveis:</p>
+                    <div class="flex flex-wrap gap-2" id="discount-codes-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmação Modal -->
+    <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Confirmar Eliminação</h3>
+                <p class="text-gray-600">Tem certeza que deseja eliminar este item?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50">Cancelar</button>
+                <button id="confirm-delete-btn" class="flex-1 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick View Modal -->
+    <div id="quick-view-modal" class="modal quick-view-modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            <button onclick="closeQuickView()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center z-10 transition">
+                <i class="fas fa-times text-xl text-gray-600"></i>
+            </button>
+            <div id="quick-view-content" class="grid md:grid-cols-2 gap-8 p-8"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Produto Admin -->
+    <div id="product-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="sticky top-0 bg-white border-b border-gray-100 p-6 flex justify-between items-center z-10">
+                <h2 id="product-modal-title" class="text-2xl font-bold text-gray-800">Novo Produto</h2>
+                <button onclick="closeProductModal()" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center">
+                    <i class="fas fa-times text-xl text-gray-500"></i>
+                </button>
+            </div>
+            
+            <form id="product-form" class="p-6 space-y-6" onsubmit="event.preventDefault(); saveProduct();">
+                <input type="hidden" id="product-id">
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nome do Produto *</label>
+                        <input type="text" id="prod-name" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 focus:ring-2 focus:ring-turquesa-200 outline-none" placeholder="Ex: Vestido Xadrez Menina">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Categoria *</label>
+                        <select id="prod-category" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none">
+                            <option value="">Selecionar...</option>
+                            <option value="menina">Menina</option>
+                            <option value="menino">Menino</option>
+                            <option value="conjuntos">Conjuntos</option>
+                            <option value="acessorios">Acessórios</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Preço Original (€) *</label>
+                        <input type="number" id="prod-price" step="0.01" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" placeholder="29.99" onchange="calculateSalePrice()">
+                    </div>
+
+                    <div class="md:col-span-2 bg-turquesa-50 p-4 rounded-xl border border-turquesa-200">
+                        <div class="flex items-center gap-3 mb-4">
+                            <input type="checkbox" id="prod-on-sale" class="w-5 h-5 rounded text-turquesa-500" onchange="toggleSaleSection()">
+                            <label for="prod-on-sale" class="font-medium text-gray-800">Produto em Promoção</label>
+                        </div>
+                        
+                        <div id="sale-section" class="hidden space-y-4">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Desconto</label>
+                                    <select id="prod-discount-type" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" onchange="calculateSalePrice()">
+                                        <option value="percentage">Percentagem (%)</option>
+                                        <option value="fixed">Valor Fixo (€)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Valor do Desconto</label>
+                                    <div class="relative">
+                                        <input type="number" id="prod-discount-value" step="0.01" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none pr-12" placeholder="20" oninput="calculateSalePrice()">
+                                        <span id="discount-symbol" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-lg border border-turquesa-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">Preço Original:</span>
+                                    <span class="text-gray-400 line-through" id="display-original-price">€0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-gray-800 font-medium">Preço Final:</span>
+                                    <span class="text-red-500 font-bold text-2xl" id="display-sale-price">€0.00</span>
+                                </div>
+                                <div class="mt-2 text-center">
+                                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold" id="display-discount-percent">0% OFF</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Código de Desconto Específico (opcional)</label>
+                                <input type="text" id="prod-discount-code" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none uppercase" placeholder="Ex: VESTIDO20">
+                                <p class="text-xs text-gray-500 mt-1">Deixe vazio para promoção geral</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade em Stock *</label>
+                        <input type="number" id="prod-stock" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" placeholder="100">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">SKU (Código)</label>
+                        <input type="text" id="prod-sku" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" placeholder="MBB-2026-001">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">URL da Imagem</label>
+                        <input type="url" id="prod-image" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" placeholder="https://exemplo.com/imagem.jpg">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tamanhos Disponíveis</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="sizes" value="0-3M" class="rounded text-turquesa-500">
+                                <span>0-3M</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="sizes" value="3-6M" class="rounded text-turquesa-500">
+                                <span>3-6M</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="sizes" value="6-9M" class="rounded text-turquesa-500">
+                                <span>6-9M</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="sizes" value="9-12M" class="rounded text-turquesa-500">
+                                <span>9-12M</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="sizes" value="12-18M" class="rounded text-turquesa-500">
+                                <span>12-18M</span>
+                            </label>
+                            <label class="flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                <input type="checkbox" name="sizes" value="18-24M" class="rounded text-turquesa-500">
+                                <span>18-24M</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                        <textarea id="prod-description" rows="4" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" placeholder="Descreva o produto..."></textarea>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" id="prod-featured" class="w-5 h-5 rounded text-turquesa-500">
+                            <span class="text-gray-700">Produto em Destaque (aparece na página inicial)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sticky bottom-0 bg-white border-t border-gray-100 pt-6 flex justify-end gap-3">
+                    <button type="button" onclick="closeProductModal()" class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-turquesa-500 to-turquesa-600 text-white rounded-xl hover:shadow-lg transition flex items-center gap-2">
+                        <i class="fas fa-save"></i>
+                        <span id="save-product-text">Guardar Produto</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Encomenda -->
+    <div id="order-modal" class="modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="sticky top-0 bg-white border-b border-gray-100 p-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Detalhes da Encomenda</h2>
+                    <p class="text-gray-500" id="order-modal-id">#1234</p>
+                </div>
+                <button onclick="closeOrderModal()" class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center">
+                    <i class="fas fa-times text-xl text-gray-500"></i>
+                </button>
+            </div>
+            <div id="order-details-content" class="p-6"></div>
+        </div>
+    </div>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div id="main-layout">
+        <!-- Navegação -->
+        <nav class="fixed w-full z-40 glass-effect shadow-sm" id="navbar">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="showPage('home')">
+                        <div class="w-12 h-12 bg-gradient-to-br from-turquesa-400 to-turquesa-600 rounded-full flex items-center justify-center mr-3 shadow-lg">
+                            <i class="fas fa-baby text-white text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-display font-bold text-2xl text-gray-800 tracking-tight">Mundo do Bebê</h1>
+                            <p class="text-xs text-turquesa-600 font-medium">Entra à Descoberta</p>
+                        </div>
+                    </div>
+
+                    <div class="hidden md:flex items-center space-x-8">
+                        <a href="#" onclick="showPage('home')" class="nav-link text-gray-700 hover:text-turquesa-600 font-medium transition">Início</a>
+                        <a href="#" onclick="showPage('shop')" class="nav-link text-gray-700 hover:text-turquesa-600 font-medium transition">Loja</a>
+                        <a href="#" onclick="showPage('categories')" class="nav-link text-gray-700 hover:text-turquesa-600 font-medium transition">Categorias</a>
+                        <a href="#" onclick="showPage('about')" class="nav-link text-gray-700 hover:text-turquesa-600 font-medium transition">Sobre Nós</a>
+                        <a href="#" onclick="showPage('contact')" class="nav-link text-gray-700 hover:text-turquesa-600 font-medium transition">Contactos</a>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <button onclick="toggleCart()" class="text-gray-600 hover:text-turquesa-600 transition p-2 relative">
+                            <i class="fas fa-shopping-bag text-xl"></i>
+                            <span id="cart-count" class="absolute -top-1 -right-1 bg-turquesa-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span>
+                        </button>
+                        <button onclick="showAdminLogin()" class="bg-turquesa-100 text-turquesa-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-turquesa-200 transition">
+                            <i class="fas fa-lock mr-2"></i>Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Home -->
+        <div id="page-home" class="page active pt-20">
+            <section class="relative bg-gradient-to-br from-turquesa-50 via-white to-turquesa-100 overflow-hidden min-h-[80vh] flex items-center">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                    <div class="grid lg:grid-cols-2 gap-12 items-center">
+                        <div class="space-y-8">
+                            <div class="inline-block bg-turquesa-100 text-turquesa-700 px-4 py-2 rounded-full text-sm font-semibold">
+                                ✨ Nova Coleção Primavera 2026
+                            </div>
+                            <h1 class="text-5xl lg:text-7xl font-display font-bold text-gray-900 leading-tight">
+                                Vestindo os <span class="text-turquesa-600">Sonhos</span> dos Mais Pequenos
+                            </h1>
+                            <p class="text-xl text-gray-600 leading-relaxed">
+                                Descubra a nossa coleção exclusiva de roupa para bebé. Conforto, qualidade e estilo para os momentos mais especiais.
+                            </p>
+                            <button onclick="showPage('shop')" class="bg-gradient-to-r from-turquesa-500 to-turquesa-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-xl transition transform hover:scale-105">
+                                Explorar Loja <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1560506840-ec148e82a604?w=800&h=1000&fit=crop" class="rounded-3xl shadow-2xl" alt="Bebé">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-20 bg-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <h2 class="text-4xl font-display font-bold text-gray-900 mb-12 text-center">Novidades</h2>
+                    <div id="featured-products" class="grid md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Loja com Filtros -->
+        <div id="page-shop" class="page pt-20">
+            <div class="bg-turquesa-50 py-12">
+                <div class="max-w-7xl mx-auto px-4">
+                    <h1 class="text-4xl font-bold text-gray-900">Loja</h1>
+                    <p class="text-gray-600 mt-2">Todos os nossos produtos</p>
+                </div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Sidebar de Filtros -->
+                    <aside class="lg:w-64 space-y-6">
+                        <!-- Filtro de Categoria -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-filter mr-2 text-turquesa-500"></i>Categorias
+                            </h3>
+                            <div class="space-y-2">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" class="filter-cat mr-3 text-turquesa-500 rounded" value="menina" onchange="applyFilters()">
+                                    <span class="text-gray-700">Menina</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" class="filter-cat mr-3 text-turquesa-500 rounded" value="menino" onchange="applyFilters()">
+                                    <span class="text-gray-700">Menino</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" class="filter-cat mr-3 text-turquesa-500 rounded" value="conjuntos" onchange="applyFilters()">
+                                    <span class="text-gray-700">Conjuntos</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" class="filter-cat mr-3 text-turquesa-500 rounded" value="acessorios" onchange="applyFilters()">
+                                    <span class="text-gray-700">Acessórios</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Filtro de Preço -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-4">Preço</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-sm text-gray-600">Mínimo: €<span id="price-min-display">0</span></label>
+                                    <input type="range" id="price-min" min="0" max="100" value="0" class="w-full accent-turquesa-500" oninput="updatePriceRange()">
+                                </div>
+                                <div>
+                                    <label class="text-sm text-gray-600">Máximo: €<span id="price-max-display">100</span></label>
+                                    <input type="range" id="price-max" min="0" max="100" value="100" class="w-full accent-turquesa-500" oninput="updatePriceRange()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtro de Promoções -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-4">Promoções</h3>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="filter-sale" class="mr-3 text-turquesa-500 rounded" onchange="applyFilters()">
+                                <span class="text-gray-700">Só em promoção</span>
+                            </label>
+                        </div>
+
+                        <!-- Filtro de Tamanho -->
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 mb-4">Tamanho</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <button class="filter-size px-3 py-1 border border-gray-300 rounded-lg text-sm hover:border-turquesa-500 transition" onclick="toggleFilterSize(this, '0-3M')">0-3M</button>
+                                <button class="filter-size px-3 py-1 border border-gray-300 rounded-lg text-sm hover:border-turquesa-500 transition" onclick="toggleFilterSize(this, '3-6M')">3-6M</button>
+                                <button class="filter-size px-3 py-1 border border-gray-300 rounded-lg text-sm hover:border-turquesa-500 transition" onclick="toggleFilterSize(this, '6-9M')">6-9M</button>
+                                <button class="filter-size px-3 py-1 border border-gray-300 rounded-lg text-sm hover:border-turquesa-500 transition" onclick="toggleFilterSize(this, '9-12M')">9-12M</button>
+                                <button class="filter-size px-3 py-1 border border-gray-300 rounded-lg text-sm hover:border-turquesa-500 transition" onclick="toggleFilterSize(this, '12-18M')">12-18M</button>
+                                <button class="filter-size px-3 py-1 border border-gray-300 rounded-lg text-sm hover:border-turquesa-500 transition" onclick="toggleFilterSize(this, '18-24M')">18-24M</button>
+                            </div>
+                        </div>
+
+                        <button onclick="clearFilters()" class="w-full py-3 border-2 border-gray-300 rounded-xl text-gray-600 font-medium hover:border-turquesa-500 hover:text-turquesa-600 transition">
+                            Limpar Filtros
+                        </button>
+                    </aside>
+
+                    <!-- Grid de Produtos -->
+                    <div class="flex-1">
+                        <!-- Barra de Ordenação e Resultados -->
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm">
+                            <p class="text-gray-600">A mostrar <span id="products-showing" class="font-bold text-gray-800">0</span> produtos</p>
+                            <div class="flex items-center gap-3">
+                                <label class="text-sm text-gray-600">Ordenar por:</label>
+                                <select id="sort-select" class="sort-select px-4 py-2 border border-gray-300 rounded-lg focus:border-turquesa-500 outline-none pr-10" onchange="applyFilters()">
+                                    <option value="newest">Mais Recentes</option>
+                                    <option value="price-asc">Preço: Menor → Maior</option>
+                                    <option value="price-desc">Preço: Maior → Menor</option>
+                                    <option value="name-asc">Nome: A → Z</option>
+                                    <option value="name-desc">Nome: Z → A</option>
+                                    <option value="discount">Maior Desconto</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="shop-products" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                        
+                        <!-- Mensagem quando não há resultados -->
+                        <div id="no-results" class="hidden text-center py-20">
+                            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-xl text-gray-500">Nenhum produto encontrado com estes filtros</p>
+                            <button onclick="clearFilters()" class="mt-4 text-turquesa-600 font-medium hover:underline">Limpar filtros</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página de Detalhe do Produto -->
+        <div id="page-product-detail" class="page pt-20">
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <button onclick="showPage('shop')" class="mb-6 text-gray-600 hover:text-turquesa-600 flex items-center transition">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar à Loja
+                </button>
+                <div id="product-detail-content" class="grid lg:grid-cols-2 gap-12"></div>
+            </div>
+        </div>
+
+        <!-- Carrinho -->
+        <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center bg-gradient-to-r from-turquesa-50 to-white">
+                <h2 class="text-2xl font-bold"><i class="fas fa-shopping-bag mr-2 text-turquesa-500"></i>Carrinho</h2>
+                <button onclick="toggleCart()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-2xl"></i></button>
+            </div>
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="text-center text-gray-400 mt-10">
+                    <i class="fas fa-shopping-basket text-6xl mb-4 opacity-30"></i>
+                    <p>O carrinho está vazio</p>
+                    <button onclick="toggleCart(); showPage('shop')" class="mt-4 text-turquesa-600 font-medium hover:underline">Ver produtos</button>
+                </div>
+            </div>
+            <div class="p-6 border-t bg-gray-50 space-y-4">
+                <div id="cart-discount-info" class="hidden bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div class="flex justify-between items-center">
+                        <span class="text-green-700 font-medium" id="discount-code-display"></span>
+                        <button onclick="removeDiscount()" class="text-red-500 hover:text-red-700 text-sm">Remover</button>
+                    </div>
+                    <p class="text-green-600 text-sm mt-1">Desconto aplicado: -€<span id="discount-amount">0.00</span></p>
+                </div>
+                <div class="mt-3">
+    <label class="text-sm text-gray-600">Código de desconto</label>
+    <div class="flex gap-2 mt-1">
+        <input 
+            type="text" 
+            id="cart-discount-input" 
+            placeholder="Ex: BEBE20"
+            class="flex-1 px-3 py-2 border rounded-lg uppercase">
+        
+        <button 
+            onclick="applyDiscountFromCart()" 
+            class="bg-turquesa-500 text-white px-4 rounded-lg">
+            Aplicar
+        </button>
+    </div>
+</div>
+                <div class="flex justify-between text-gray-600">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">€0.00</span>
+                </div>
+                <div class="flex justify-between text-xl font-bold text-gray-800">
+                    <span>Total</span>
+                    <span id="cart-total">€0.00</span>
+                </div>
+                <button onclick="showPage('checkout')" class="w-full bg-turquesa-500 text-white py-4 rounded-full font-bold hover:bg-turquesa-600 transition">
+                    Finalizar Compra
+                </button>
+            </div>
+        </div>
+        <div id="cart-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="toggleCart()"></div>
+
+        <!-- Checkout -->
+        <div id="page-checkout" class="page pt-20">
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <h1 class="text-3xl font-bold text-gray-900 mb-8">Finalizar Compra</h1>
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">Dados de Envio</h2>
+                            <form class="space-y-4" id="checkout-form">
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <input type="text" placeholder="Nome" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                    <input type="text" placeholder="Apelido" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                </div>
+                                <input type="email" placeholder="Email" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                <input type="tel" placeholder="Telefone" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                <input type="text" placeholder="Morada" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                <div class="grid md:grid-cols-3 gap-4">
+                                    <input type="text" placeholder="Código Postal" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                    <input type="text" placeholder="Cidade" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                    <input type="text" placeholder="País" value="Portugal" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">Método de Pagamento</h2>
+                            <div class="space-y-3">
+                                <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-turquesa-500 transition">
+                                    <input type="radio" name="payment" class="mr-4 text-turquesa-500" checked>
+                                    <div class="flex-1">
+                                        <p class="font-medium">MB Way</p>
+                                        <p class="text-sm text-gray-500">Pagamento rápido pelo telemóvel</p>
+                                    </div>
+                                    <i class="fas fa-mobile-alt text-2xl text-gray-400"></i>
+                                </label>
+                                <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-turquesa-500 transition">
+                                    <input type="radio" name="payment" class="mr-4 text-turquesa-500">
+                                    <div class="flex-1">
+                                        <p class="font-medium">Cartão de Crédito/Débito</p>
+                                        <p class="text-sm text-gray-500">Visa, Mastercard</p>
+                                    </div>
+                                    <i class="fas fa-credit-card text-2xl text-gray-400"></i>
+                                </label>
+                                <label class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-turquesa-500 transition">
+                                    <input type="radio" name="payment" class="mr-4 text-turquesa-500">
+                                    <div class="flex-1">
+                                        <p class="font-medium">Referência Multibanco</p>
+                                        <p class="text-sm text-gray-500">Pagamento em ATM</p>
+                                    </div>
+                                    <i class="fas fa-university text-2xl text-gray-400"></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 sticky top-24">
+                            <h2 class="text-xl font-bold text-gray-800 mb-4">Resumo da Encomenda</h2>
+                            <div id="checkout-items" class="space-y-4 mb-6 max-h-64 overflow-y-auto"></div>
+                            <div class="border-t border-gray-200 pt-4 space-y-2">
+                                <div class="flex justify-between text-gray-600">
+                                    <span>Subtotal</span>
+                                    <span id="checkout-subtotal">€0.00</span>
+                                </div>
+                                <div id="checkout-discount-row" class="flex justify-between text-green-600 hidden">
+                                    <span>Desconto</span>
+                                    <span id="checkout-discount">-€0.00</span>
+                                </div>
+                                <div class="flex justify-between text-gray-600">
+                                    <span>Envio</span>
+                                    <span class="text-turquesa-600">Grátis</span>
+                                </div>
+                                <div class="flex justify-between text-xl font-bold text-gray-800 pt-2 border-t border-gray-200">
+                                    <span>Total</span>
+                                    <span id="checkout-total">€0.00</span>
+                                </div>
+                            </div>
+                            <button onclick="processCheckout()" class="w-full bg-gradient-to-r from-turquesa-500 to-turquesa-600 text-white py-4 rounded-full font-bold text-lg hover:shadow-lg transition mt-6">
+                                Confirmar Pagamento
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outras páginas -->
+        <div id="page-categories" class="page pt-20">
+            <div class="bg-turquesa-50 py-12">
+                <div class="max-w-7xl mx-auto px-4">
+                    <h1 class="text-4xl font-bold text-gray-900">Categorias</h1>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="relative overflow-hidden rounded-3xl aspect-[16/9] group cursor-pointer" onclick="filterByCategory('menina')">
+                        <img src="https://images.unsplash.com/photo-1542384701-c0e46e0eda04?w=1200&h=675&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-8">
+                            <h2 class="text-3xl font-bold text-white mb-2">Menina</h2>
+                            <p class="text-white/80 mb-4">Vestidos, saias, blusas e conjuntos fofos</p>
+                            <span class="inline-flex items-center text-white font-bold">Explorar <i class="fas fa-arrow-right ml-2 group-hover:translate-x-2 transition"></i></span>
+                        </div>
+                    </div>
+                    <div class="relative overflow-hidden rounded-3xl aspect-[16/9] group cursor-pointer" onclick="filterByCategory('menino')">
+                        <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?w=1200&h=675&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-8">
+                            <h2 class="text-3xl font-bold text-white mb-2">Menino</h2>
+                            <p class="text-white/80 mb-4">Conjuntos, casacos, calças e camisas</p>
+                            <span class="inline-flex items-center text-white font-bold">Explorar <i class="fas fa-arrow-right ml-2 group-hover:translate-x-2 transition"></i></span>
+                        </div>
+                    </div>
+                    <div class="relative overflow-hidden rounded-3xl aspect-[16/9] group cursor-pointer" onclick="filterByCategory('conjuntos')">
+                        <img src="https://images.unsplash.com/photo-1522771930-78848dc92939?w=1200&h=675&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-8">
+                            <h2 class="text-3xl font-bold text-white mb-2">Conjuntos</h2>
+                            <p class="text-white/80 mb-4">Looks completos e coordenados</p>
+                            <span class="inline-flex items-center text-white font-bold">Explorar <i class="fas fa-arrow-right ml-2 group-hover:translate-x-2 transition"></i></span>
+                        </div>
+                    </div>
+                    <div class="relative overflow-hidden rounded-3xl aspect-[16/9] group cursor-pointer" onclick="filterByCategory('acessorios')">
+                        <img src="https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=1200&h=675&fit=crop" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-8">
+                            <h2 class="text-3xl font-bold text-white mb-2">Acessórios</h2>
+                            <p class="text-white/80 mb-4">Laços, gorros, meias e detalhes especiais</p>
+                            <span class="inline-flex items-center text-white font-bold">Explorar <i class="fas fa-arrow-right ml-2 group-hover:translate-x-2 transition"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-about" class="page pt-20">
+            <div class="bg-turquesa-50 py-12">
+                <div class="max-w-7xl mx-auto px-4">
+                    <h1 class="text-4xl font-bold text-gray-900">Sobre Nós</h1>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto px-4 py-16">
+                <p class="text-xl leading-relaxed mb-6 text-gray-600">
+                    O Mundo do Bebê nasceu do sonho de criar uma loja onde cada peça de roupa contasse uma história de amor, cuidado e dedicação.
+                </p>
+            </div>
+        </div>
+
+        <div id="page-contact" class="page pt-20">
+            <div class="bg-turquesa-50 py-12">
+                <div class="max-w-7xl mx-auto px-4">
+                    <h1 class="text-4xl font-bold text-gray-900">Contactos</h1>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 py-16">
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Fala Connosco</h2>
+                        <form class="space-y-6" onsubmit="event.preventDefault(); showToast('Mensagem enviada!'); this.reset();">
+                            <input type="text" placeholder="Nome" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                            <input type="email" placeholder="Email" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                            <textarea rows="5" placeholder="Mensagem" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required></textarea>
+                            <button type="submit" class="bg-turquesa-500 text-white px-8 py-4 rounded-full font-bold hover:bg-turquesa-600 transition">Enviar</button>
+                        </form>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl shadow-sm">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6">Informações</h3>
+                        <p><i class="fas fa-map-marker-alt text-turquesa-600 mr-2"></i> Rua dos Bebés Felizes, 123, Porto</p>
+                        <p class="mt-2"><i class="fas fa-phone text-turquesa-600 mr-2"></i> +351 912 345 678</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BACKOFFICE -->
+    <div id="admin-layout" class="hidden min-h-screen bg-gray-100">
+     <aside id="admin-sidebar" class="fixed left-0 top-0 h-full w-64 bg-gray-900 text-white z-50 flex flex-col transform -translate-x-full md:translate-x-0 transition">
+            <div class="p-6 border-b border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-turquesa-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-cog text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg">Backoffice</h2>
+                        <p class="text-xs text-gray-400">Administração</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 p-4 space-y-1">
+                <button onclick="showAdminPage('dashboard')" id="nav-dashboard" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition text-left active">
+                    <i class="fas fa-chart-line w-5"></i>Dashboard
+                </button>
+                <button onclick="showAdminPage('products')" id="nav-products" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition text-left">
+                    <i class="fas fa-box w-5"></i>Produtos
+                </button>
+                <button onclick="showAdminPage('orders')" id="nav-orders" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition text-left">
+                    <i class="fas fa-shopping-cart w-5"></i>Encomendas
+                </button>
+                <button onclick="showAdminPage('discounts')" id="nav-discounts" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition text-left">
+                    <i class="fas fa-tags w-5"></i>Códigos de Desconto
+                </button>
+            </nav>
+            <div class="p-4 border-t border-gray-800">
+                <button onclick="logoutAdmin()" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 transition">
+                    <i class="fas fa-sign-out-alt w-5"></i>Sair
+                </button>
+            </div>
+        </aside>
+
+        <main class="ml-64 min-h-screen">
+            <header class="bg-white shadow-sm sticky top-0 z-30">
+                <div class="flex justify-between items-center px-8 py-4">
+                    <h1 id="admin-page-title" class="text-2xl font-bold text-gray-800">Dashboard</h1>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-turquesa-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-turquesa-600"></i>
+                        </div>
+                        <div class="hidden md:block">
+                            <p class="font-medium text-gray-800">Administrador</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard -->
+            <div <button onclick="toggleAdminMenu()" class="md:hidden p-2">
+    <i class="fas fa-bars text-xl"></i>
+</button>
+                id="admin-dashboard" class="admin-page active p-8">
+                <div class="grid md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-gray-500 text-sm">Vendas Hoje</p>
+                        <p class="text-3xl font-bold text-gray-800">€234.50</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-gray-500 text-sm">Encomendas</p>
+                        <p class="text-3xl font-bold text-gray-800">12</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-gray-500 text-sm">Produtos</p>
+                        <p class="text-3xl font-bold text-gray-800" id="admin-dash-products">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <p class="text-gray-500 text-sm">Em Promoção</p>
+                        <p class="text-3xl font-bold text-turquesa-600" id="admin-dash-sales">0</p>
+                    </div>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-4">Vendas</h3>
+                        <canvas id="salesChart" height="250"></canvas>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <h3 class="font-bold text-gray-800 mb-4">Top Produtos</h3>
+                        <canvas id="productsChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produtos Admin -->
+            <div id="admin-products" class="admin-page p-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Gestão de Produtos</h2>
+                            <p class="text-gray-500 text-sm" id="admin-products-count">0 produtos</p>
+                        </div>
+                        <button onclick="openProductModal()" class="bg-turquesa-500 text-white px-4 py-2 rounded-lg hover:bg-turquesa-600 transition">
+                            <i class="fas fa-plus mr-2"></i>Novo Produto
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Produto</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Preço</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Promoção</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Stock</th>
+                                    <th class="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-products-table" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Códigos de Desconto -->
+            <div id="admin-discounts" class="admin-page p-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800">Códigos de Desconto</h2>
+                    </div>
+                    <div class="p-6">
+                        <form onsubmit="event.preventDefault(); addDiscountCode();" class="grid md:grid-cols-4 gap-4 mb-6">
+                            <input type="text" id="new-discount-code" placeholder="Código (ex: BEBE20)" class="px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none uppercase" required>
+                            <select id="new-discount-type" class="px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none">
+                                <option value="percentage">Percentagem (%)</option>
+                                <option value="fixed">Valor Fixo (€)</option>
+                            </select>
+                            <input type="number" id="new-discount-value" placeholder="Valor" class="px-4 py-3 rounded-lg border border-gray-300 focus:border-turquesa-500 outline-none" required>
+                            <button type="submit" class="bg-turquesa-500 text-white px-4 py-3 rounded-lg hover:bg-turquesa-600 transition font-bold">
+                                <i class="fas fa-plus mr-2"></i>Adicionar
+                            </button>
+                        </form>
+                        <div id="admin-discounts-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Encomendas -->
+            <div id="admin-orders" class="admin-page p-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800">Encomendas</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Nº</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Cliente</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Total</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orders-table" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // DADOS
+        let products = [
+            { id: 1, name: "Vestido Xadrez Menina", category: "menina", price: 24.99, salePrice: 19.99, onSale: true, discountType: "percentage", discountValue: 20, discountCode: null, stock: 15, sku: "MBB-001", sizes: ["0-3M", "3-6M", "6-9M"], featured: true, image: "https://images.unsplash.com/photo-1542384701-c0e46e0eda04?w=400", description: "Vestido xadrez adorável em tons de rosa e branco." },
+            { id: 2, name: "Conjunto Natal Menino", category: "menino", price: 29.99, salePrice: 24.99, onSale: true, discountType: "fixed", discountValue: 5, discountCode: "NATAL5", stock: 8, sku: "MBB-002", sizes: ["6-9M", "9-12M"], featured: true, image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400", description: "Conjunto festivo de Natal." },
+            { id: 3, name: "Body I Love Mom", category: "conjuntos", price: 14.99, salePrice: null, onSale: false, discountType: null, discountValue: 0, discountCode: null, stock: 25, sku: "MBB-003", sizes: ["0-3M", "3-6M"], featured: true, image: "https://images.unsplash.com/photo-1522771930-78848dc92939?w=400", description: "Body com mensagem especial." },
+            { id: 4, name: "Casaco Snow Bege", category: "menino", price: 34.99, salePrice: null, onSale: false, discountType: null, discountValue: 0, discountCode: null, stock: 5, sku: "MBB-004", sizes: ["9-12M", "12-18M"], featured: true, image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400", description: "Casaco quentinho para inverno." },
+            { id: 5, name: "Vestido Vermelho Laço", category: "menina", price: 22.99, salePrice: 18.39, onSale: true, discountType: "percentage", discountValue: 20, discountCode: null, stock: 12, sku: "MBB-005", sizes: ["3-6M", "6-9M"], featured: false, image: "https://images.unsplash.com/photo-1542384701-c0e46e0eda04?w=400", description: "Vestido vermelho vibrante." },
+            { id: 6, name: "Conjunto Casual Menino", category: "conjuntos", price: 27.99, salePrice: null, onSale: false, discountType: null, discountValue: 0, discountCode: null, stock: 20, sku: "MBB-006", sizes: ["6-9M", "9-12M"], featured: false, image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400", description: "Conjunto casual para o dia a dia." },
+            { id: 7, name: "Laço Xadrez Cabelo", category: "acessorios", price: 5.99, salePrice: 4.79, onSale: true, discountType: "percentage", discountValue: 20, discountCode: null, stock: 50, sku: "MBB-007", sizes: ["Único"], featured: false, image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400", description: "Laço fofo para cabelo." },
+            { id: 8, name: "Pijama Soft Rosa", category: "menina", price: 19.99, salePrice: null, onSale: false, discountType: null, discountValue: 0, discountCode: null, stock: 3, sku: "MBB-008", sizes: ["0-3M", "3-6M"], featured: false, image: "https://images.unsplash.com/photo-1542384701-c0e46e0eda04?w=400", description: "Pijama macio e confortável." }
+        ];
+
+        let orders = [
+            { id: "ENC-001", customer: "Ana Silva", email: "ana@email.pt", phone: "912345678", date: "2026-03-18", total: 45.98, status: "pending", items: [{name: "Vestido Xadrez", qty: 1, price: 19.99, size: "3-6M"}] }
+        ];
+
+        let customers = [
+            { id: 1, name: "Ana Silva", email: "ana@email.pt", phone: "912345678", orders: 1, total: 45.98 }
+        ];
+
+        let discountCodes = [
+            { code: "BEMVINDO", type: "percentage", value: 10, active: true },
+            { code: "BEBE20", type: "percentage", value: 20, active: true },
+            { code: "FRETE5", type: "fixed", value: 5, active: true }
+        ];
+
+        let cart = [];
+        let currentDiscount = null;
+        let deleteId = null;
+        let deleteType = null;
+        let currentProduct = null;
+        let selectedSize = null;
+        let activeFilters = {
+            categories: [],
+            priceMin: 0,
+            priceMax: 100,
+            onSale: false,
+            sizes: []
+        };
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFeaturedProducts();
+            loadShopProducts();
+            updateCartUI();
+            updateAdminDashboard();
+            loadAdminProducts();
+            loadAdminOrders();
+            loadAdminDiscounts();
+            initCharts();
+        });
+
+        // NAVEGAÇÃO
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            window.scrollTo(0, 0);
+            if (page === 'checkout') loadCheckout();
+            if (page === 'shop') {
+                clearFilters();
+                loadShopProducts();
+            }
+        }
+
+        function showAdminLogin() {
+            const pass = prompt("Password de administrador:");
+            if (pass === "admin123") {
+                document.getElementById('main-layout').classList.add('hidden');
+                document.getElementById('admin-layout').classList.remove('hidden');
+                showAdminPage('dashboard');
+                showToast('Bem-vindo ao Backoffice!');
+            } else {
+                showToast('Password incorreta!');
+            }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('admin-layout').classList.add('hidden');
+            document.getElementById('main-layout').classList.remove('hidden');
+            showPage('home');
+        }
+
+        function showAdminPage(page) {
+            document.querySelectorAll('.admin-page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+            document.getElementById('admin-' + page).classList.add('active');
+            document.getElementById('nav-' + page).classList.add('active');
+            
+            const titles = {
+                'dashboard': 'Dashboard',
+                'products': 'Gestão de Produtos',
+                'orders': 'Encomendas',
+                'discounts': 'Códigos de Desconto'
+            };
+            document.getElementById('admin-page-title').textContent = titles[page];
+        }
+
+        // PRODUTOS
+        function loadFeaturedProducts() {
+            const container = document.getElementById('featured-products');
+            const featured = products.filter(p => p.featured).slice(0, 4);
+            container.innerHTML = featured.map(p => createProductCard(p)).join('');
+        }
+
+        function loadShopProducts() {
+            const container = document.getElementById('shop-products');
+            let filtered = [...products];
+
+            // Aplicar filtros
+            if (activeFilters.categories.length > 0) {
+                filtered = filtered.filter(p => activeFilters.categories.includes(p.category));
+            }
+            
+            filtered = filtered.filter(p => {
+                const price = p.salePrice || p.price;
+                return price >= activeFilters.priceMin && price <= activeFilters.priceMax;
+            });
+
+            if (activeFilters.onSale) {
+                filtered = filtered.filter(p => p.onSale);
+            }
+
+            if (activeFilters.sizes.length > 0) {
+                filtered = filtered.filter(p => p.sizes.some(s => activeFilters.sizes.includes(s)));
+            }
+
+            // Ordenar
+            const sort = document.getElementById('sort-select').value;
+            filtered.sort((a, b) => {
+                const priceA = a.salePrice || a.price;
+                const priceB = b.salePrice || b.price;
+                
+                switch(sort) {
+                    case 'price-asc': return priceA - priceB;
+                    case 'price-desc': return priceB - priceA;
+                    case 'name-asc': return a.name.localeCompare(b.name);
+                    case 'name-desc': return b.name.localeCompare(a.name);
+                    case 'discount':
+                        const discA = a.onSale ? (a.discountType === 'percentage' ? a.discountValue : (a.discountValue / a.price * 100)) : 0;
+                        const discB = b.onSale ? (b.discountType === 'percentage' ? b.discountValue : (b.discountValue / b.price * 100)) : 0;
+                        return discB - discA;
+                    default: return b.id - a.id;
+                }
+            });
+
+            document.getElementById('products-showing').textContent = filtered.length;
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('no-results').classList.remove('hidden');
+            } else {
+                document.getElementById('no-results').classList.add('hidden');
+                container.innerHTML = filtered.map(p => createProductCard(p)).join('');
+            }
+        }
+
+        function createProductCard(p) {
+            const finalPrice = p.salePrice || p.price;
+            const hasDiscount = p.onSale && p.salePrice;
+            
+            let priceHtml = `<span class="text-turquesa-600 font-bold text-lg">€${finalPrice.toFixed(2)}</span>`;
+            let badges = '';
+            
+            if (hasDiscount) {
+                priceHtml = `
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-400 line-through text-sm">€${p.price.toFixed(2)}</span>
+                        <span class="text-red-500 font-bold text-lg">€${p.salePrice.toFixed(2)}</span>
+                    </div>
+                `;
+                const percent = p.discountType === 'percentage' ? p.discountValue : Math.round((p.discountValue / p.price) * 100);
+                badges += `<span class="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold promo-badge">-${percent}%</span>`;
+            }
+            
+            if (p.stock < 5) {
+                badges += `<span class="absolute top-3 right-3 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold">ÚLTIMAS</span>`;
+            }
+
+            return `
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group relative">
+                    <div class="relative overflow-hidden aspect-square cursor-pointer" onclick="openQuickView(${p.id})">
+                        <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                        ${badges}
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <span class="bg-white text-gray-800 px-6 py-3 rounded-full font-bold transform translate-y-4 group-hover:translate-y-0 transition duration-300">
+                                <i class="fas fa-eye mr-2"></i>Ver Detalhes
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs text-gray-500 uppercase mb-1">${p.category}</p>
+                        <h3 class="font-bold text-gray-800 mb-2 cursor-pointer hover:text-turquesa-600 transition" onclick="openQuickView(${p.id})">${p.name}</h3>
+                        <div class="flex items-center justify-between mb-3">
+                            ${priceHtml}
+                            <span class="text-xs text-gray-500">${p.stock} disp.</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openQuickView(${p.id})" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover
+                                                    <button onclick="openQuickView(${p.id})" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition text-sm">
+                            <i class="fas fa-eye mr-1"></i>Ver
+                        </button>
+                        <button onclick="addToCart(${p.id})" class="flex-1 bg-turquesa-500 text-white py-2 rounded-lg font-medium hover:bg-turquesa-600 transition text-sm">
+                            <i class="fas fa-shopping-bag mr-1"></i>Comprar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function openQuickView(productId) {
+        currentProduct = products.find(p => p.id === productId);
+        if (!currentProduct) return;
+        
+        selectedSize = null;
+        const modal = document.getElementById('quick-view-modal');
+        const content = document.getElementById('quick-view-content');
+        
+        const finalPrice = currentProduct.salePrice || currentProduct.price;
+        const hasDiscount = currentProduct.onSale && currentProduct.salePrice;
+        
+        let priceDisplay = `<span class="text-3xl font-bold text-turquesa-600">€${finalPrice.toFixed(2)}</span>`;
+        let discountBadge = '';
+        
+        if (hasDiscount) {
+            const percent = currentProduct.discountType === 'percentage' ? currentProduct.discountValue : Math.round((currentProduct.discountValue / currentProduct.price) * 100);
+            priceDisplay = `
+                <div class="flex items-center gap-3">
+                    <span class="text-xl text-gray-400 line-through">€${currentProduct.price.toFixed(2)}</span>
+                    <span class="text-3xl font-bold text-red-500">€${currentProduct.salePrice.toFixed(2)}</span>
+                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">-${percent}%</span>
+                </div>
+            `;
+            if (currentProduct.discountCode) {
+                discountBadge = `<span class="bg-turquesa-100 text-turquesa-700 px-3 py-1 rounded-full text-sm">Código: ${currentProduct.discountCode}</span>`;
+            }
+        }
+        
+        const sizesHtml = currentProduct.sizes.map(size => `
+            <button class="size-btn px-4 py-2 border-2 border-gray-200 rounded-lg font-medium transition" 
+                    onclick="selectSize('${size}', this)" data-size="${size}">${size}</button>
+        `).join('');
+        
+        content.innerHTML = `
+            <div class="relative">
+                <img src="${currentProduct.image}" alt="${currentProduct.name}" class="w-full h-96 object-cover rounded-2xl">
+                ${currentProduct.stock < 5 ? '<span class="absolute top-4 left-4 bg-orange-500 text-white px-4 py-2 rounded-full font-bold">ÚLTIMAS UNIDADES</span>' : ''}
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <p class="text-sm text-gray-500 uppercase tracking-wide">${currentProduct.category}</p>
+                    <h2 class="text-3xl font-bold text-gray-800 mt-1">${currentProduct.name}</h2>
+                    <div class="mt-3">${priceDisplay}</div>
+                    ${discountBadge ? `<div class="mt-2">${discountBadge}</div>` : ''}
+                </div>
+                
+                <div class="border-t border-b border-gray-100 py-4">
+                    <p class="text-gray-600 leading-relaxed">${currentProduct.description}</p>
+                </div>
+                
+                <div>
+                    <p class="font-medium text-gray-800 mb-3">Selecionar Tamanho *</p>
+                    <div class="flex flex-wrap gap-2" id="size-selector">
+                        ${sizesHtml}
+                    </div>
+                    <p id="size-error" class="text-red-500 text-sm mt-2 hidden">Por favor selecione um tamanho</p>
+                </div>
+                
+                <div class="flex items-center gap-4 text-sm text-gray-500">
+                    <span><i class="fas fa-check-circle text-green-500 mr-1"></i> ${currentProduct.stock} em stock</span>
+                    <span><i class="fas fa-truck text-turquesa-500 mr-1"></i> Envio grátis</span>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="addToCartWithSize()" class="flex-1 bg-turquesa-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-turquesa-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        <i class="fas fa-shopping-bag mr-2"></i>Adicionar ao Carrinho
+                    </button>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-xl">
+                    <p class="text-sm text-gray-600"><i class="fas fa-info-circle text-turquesa-500 mr-2"></i>SKU: ${currentProduct.sku}</p>
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeQuickView() {
+        document.getElementById('quick-view-modal').classList.remove('active');
+        document.body.style.overflow = '';
+        currentProduct = null;
+        selectedSize = null;
+    }
+
+    function selectSize(size, btn) {
+        selectedSize = size;
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        document.getElementById('size-error').classList.add('hidden');
+    }
+
+    function addToCartWithSize() {
+        if (!selectedSize) {
+            document.getElementById('size-error').classList.remove('hidden');
+            return;
+        }
+        addToCart(currentProduct.id, selectedSize);
+        closeQuickView();
+    }
+
+    function addToCart(productId, size = null) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        
+        if (!size && product.sizes.length > 0) {
+            openQuickView(productId);
+            return;
+        }
+        
+        const existingItem = cart.find(item => item.id === productId && item.size === size);
+        
+        if (existingItem) {
+            if (existingItem.qty < product.stock) {
+                existingItem.qty++;
+            } else {
+                showToast('Stock máximo atingido!');
+                return;
+            }
+        } else {
+            cart.push({
+                id: product.id,
+                name: product.name,
+                price: product.salePrice || product.price,
+                originalPrice: product.price,
+                image: product.image,
+                size: size,
+                qty: 1,
+                sku: product.sku
+            });
+        }
+        
+        updateCartUI();
+        showToast(`${product.name} adicionado ao carrinho!`);
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        updateCartUI();
+        if (cart.length === 0) {
+            currentDiscount = null;
+        }
+    }
+
+    function updateCartQty(index, change) {
+        const item = cart[index];
+        const product = products.find(p => p.id === item.id);
+        
+        const newQty = item.qty + change;
+        if (newQty > 0 && newQty <= product.stock) {
+            item.qty = newQty;
+            updateCartUI();
+        }
+    }
+
+    function updateCartUI() {
+        const container = document.getElementById('cart-items');
+        const countBadge = document.getElementById('cart-count');
+        
+        const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
+        countBadge.textContent = totalItems;
+        
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-gray-400 mt-10">
+                    <i class="fas fa-shopping-basket text-6xl mb-4 opacity-30"></i>
+                    <p>O carrinho está vazio</p>
+                    <button onclick="toggleCart(); showPage('shop')" class="mt-4 text-turquesa-600 font-medium hover:underline">Ver produtos</button>
+                </div>
+            `;
+        } else {
+            container.innerHTML = cart.map((item, index) => `
+                <div class="flex gap-4 bg-gray-50 p-4 rounded-xl">
+                    <img src="${item.image}" alt="${item.name}" class="w-20 h-20 object-cover rounded-lg">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-800 text-sm">${item.name}</h4>
+                        <p class="text-xs text-gray-500">Tamanho: ${item.size}</p>
+                        <p class="text-turquesa-600 font-bold">€${(item.price * item.qty).toFixed(2)}</p>
+                        <div class="flex items-center gap-2 mt-2">
+                            <button onclick="updateCartQty(${index}, -1)" class="w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:border-turquesa-500">-</button>
+                            <span class="text-sm font-medium w-6 text-center">${item.qty}</span>
+                            <button onclick="updateCartQty(${index}, 1)" class="w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center text-gray-600 hover:border-turquesa-500">+</button>
+                            <button onclick="removeFromCart(${index})" class="ml-auto text-red-500 hover:text-red-700 text-sm"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        updateCartTotals();
+    }
+
+    function updateCartTotals() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        let discount = 0;
+        
+        if (currentDiscount) {
+            if (currentDiscount.type === 'percentage') {
+                discount = subtotal * (currentDiscount.value / 100);
+            } else {
+                discount = currentDiscount.value;
+            }
+            document.getElementById('cart-discount-info').classList.remove('hidden');
+            document.getElementById('discount-code-display').textContent = currentDiscount.code;
+            document.getElementById('discount-amount').textContent = discount.toFixed(2);
+        } else {
+            document.getElementById('cart-discount-info').classList.add('hidden');
+        }
+        
+        const total = subtotal - discount;
+        
+        document.getElementById('cart-subtotal').textContent = `€${subtotal.toFixed(2)}`;
+        document.getElementById('cart-total').textContent = `€${total.toFixed(2)}`;
+    }
+
+    function toggleCart() {
+        const sidebar = document.getElementById('cart-sidebar');
+        const overlay = document.getElementById('cart-overlay');
+        
+        if (sidebar.classList.contains('translate-x-full')) {
+            sidebar.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        } else {
+            sidebar.classList.add('translate-x-full');
+            overlay.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function openDiscountModal() {
+        const modal = document.getElementById('discount-modal');
+        const list = document.getElementById('discount-codes-list');
+        
+        list.innerHTML = discountCodes.filter(d => d.active).map(d => `
+            <button onclick="selectDiscountCode('${d.code}')" class="px-3 py-1 bg-turquesa-100 text-turquesa-700 rounded-full text-sm font-medium hover:bg-turquesa-200 transition">
+                ${d.code} ${d.type === 'percentage' ? '-' + d.value + '%' : '-€' + d.value}
+            </button>
+        `).join('');
+        
+        modal.classList.add('active');
+    }
+
+    function closeDiscountModal() {
+        document.getElementById('discount-modal').classList.remove('active');
+    }
+
+    function selectDiscountCode(code) {
+        document.getElementById('discount-code-input').value = code;
+    }
+
+    function applyDiscountCode() {
+        const code = document.getElementById('discount-code-input').value.toUpperCase().trim();
+        const discount = discountCodes.find(d => d.code === code && d.active);
+        
+        if (discount) {
+            currentDiscount = discount;
+            updateCartTotals();
+            showToast(`Código ${code} aplicado!`);
+            closeDiscountModal();
+        } else {
+            showToast('Código inválido ou expirado!');
+        }
+    }
+
+    function removeDiscount() {
+        currentDiscount = null;
+        updateCartTotals();
+        showToast('Desconto removido');
+    }
+
+    function loadCheckout() {
+        const container = document.getElementById('checkout-items');
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        
+        container.innerHTML = cart.map(item => `
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <div class="flex items-center gap-3">
+                    <img src="${item.image}" class="w-12 h-12 object-cover rounded-lg">
+                    <div>
+                        <p class="font-medium text-gray-800">${item.name}</p>
+                        <p class="text-sm text-gray-500">${item.size} x${item.qty}</p>
+                    </div>
+                </div>
+                <span class="font-medium">€${(item.price * item.qty).toFixed(2)}</span>
+            </div>
+        `).join('');
+        
+        let discount = 0;
+        if (currentDiscount) {
+            if (currentDiscount.type === 'percentage') {
+                discount = subtotal * (currentDiscount.value / 100);
+            } else {
+                discount = currentDiscount.value;
+            }
+            document.getElementById('checkout-discount-row').classList.remove('hidden');
+            document.getElementById('checkout-discount').textContent = `-€${discount.toFixed(2)}`;
+        } else {
+            document.getElementById('checkout-discount-row').classList.add('hidden');
+        }
+        
+        document.getElementById('checkout-subtotal').textContent = `€${subtotal.toFixed(2)}`;
+        document.getElementById('checkout-total').textContent = `€${(subtotal - discount).toFixed(2)}`;
+    }
+
+    function processCheckout() {
+        if (cart.length === 0) {
+            showToast('Carrinho vazio!');
+            return;
+        }
+        
+        const form = document.getElementById('checkout-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        let discount = 0;
+        if (currentDiscount) {
+            if (currentDiscount.type === 'percentage') {
+                discount = total * (currentDiscount.value / 100);
+            } else {
+                discount = currentDiscount.value;
+            }
+        }
+        
+        const order = {
+            id: 'ENC-' + Date.now().toString().slice(-4),
+            customer: form.querySelector('input[placeholder="Nome"]').value + ' ' + form.querySelector('input[placeholder="Apelido"]').value,
+            email: form.querySelector('input[type="email"]').value,
+            phone: form.querySelector('input[type="tel"]').value,
+            date: new Date().toISOString().split('T')[0],
+            total: total - discount,
+            status: 'pending',
+            items: cart.map(item => ({
+                name: item.name,
+                qty: item.qty,
+                price: item.price,
+                size: item.size
+            }))
+        };
+        
+        orders.unshift(order);
+        
+        // Atualizar stock
+        cart.forEach(item => {
+            const product = products.find(p => p.id === item.id);
+            if (product) {
+                product.stock -= item.qty;
+            }
+        });
+        
+        cart = [];
+        currentDiscount = null;
+        updateCartUI();
+        
+        showToast('Encomenda realizada com sucesso!');
+        showPage('home');
+        
+        // Atualizar admin
+        loadAdminOrders();
+        updateAdminDashboard();
+        loadShopProducts();
+        loadFeaturedProducts();
+    }
+
+    // FILTROS
+    function applyFilters() {
+        activeFilters.categories = Array.from(document.querySelectorAll('.filter-cat:checked')).map(cb => cb.value);
+        activeFilters.priceMin = parseInt(document.getElementById('price-min').value);
+        activeFilters.priceMax = parseInt(document.getElementById('price-max').value);
+        activeFilters.onSale = document.getElementById('filter-sale').checked;
+        
+        loadShopProducts();
+    }
+
+    function updatePriceRange() {
+        const min = document.getElementById('price-min').value;
+        const max = document.getElementById('price-max').value;
+        document.getElementById('price-min-display').textContent = min;
+        document.getElementById('price-max-display').textContent = max;
+        applyFilters();
+    }
+
+    function toggleFilterSize(btn, size) {
+        btn.classList.toggle('bg-turquesa-500');
+        btn.classList.toggle('text-white');
+        btn.classList.toggle('border-turquesa-500');
+        
+        if (activeFilters.sizes.includes(size)) {
+            activeFilters.sizes = activeFilters.sizes.filter(s => s !== size);
+        } else {
+            activeFilters.sizes.push(size);
+        }
+        applyFilters();
+    }
+
+    function clearFilters() {
+        document.querySelectorAll('.filter-cat').forEach(cb => cb.checked = false);
+        document.getElementById('price-min').value = 0;
+        document.getElementById('price-max').value = 100;
+        document.getElementById('filter-sale').checked = false;
+        document.querySelectorAll('.filter-size').forEach(btn => {
+            btn.classList.remove('bg-turquesa-500', 'text-white', 'border-turquesa-500');
+        });
+        document.getElementById('sort-select').value = 'newest';
+        
+        activeFilters = {
+            categories: [],
+            priceMin: 0,
+            priceMax: 100,
+            onSale: false,
+            sizes: []
+        };
+        
+        updatePriceRange();
+    }
+
+    function filterByCategory(category) {
+        showPage('shop');
+        document.querySelectorAll('.filter-cat').forEach(cb => {
+            cb.checked = cb.value === category;
+        });
+        applyFilters();
+    }
+
+    // ADMIN
+    function updateAdminDashboard() {
+        document.getElementById('admin-dash-products').textContent = products.length;
+        document.getElementById('admin-dash-sales').textContent = products.filter(p => p.onSale).length;
+    }
+
+    function loadAdminProducts() {
+        const tbody = document.getElementById('admin-products-table');
+        document.getElementById('admin-products-count').textContent = products.length + ' produtos';
+        
+        tbody.innerHTML = products.map(p => `
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${p.image}" class="w-12 h-12 object-cover rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-800">${p.name}</p>
+                            <p class="text-xs text-gray-500">${p.sku}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    ${p.onSale ? `
+                        <span class="text-gray-400 line-through">€${p.price.toFixed(2)}</span><br>
+                        <span class="text-red-500 font-bold">€${p.salePrice.toFixed(2)}</span>
+                    ` : `<span class="font-medium">€${p.price.toFixed(2)}</span>`}
+                </td>
+                <td class="px-6 py-4">
+                    ${p.onSale ? `
+                        <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold">
+                            ${p.discountType === 'percentage' ? p.discountValue + '%' : '€' + p.discountValue}
+                        </span>
+                        ${p.discountCode ? `<span class="text-xs text-gray-500 block mt-1">${p.discountCode}</span>` : ''}
+                    ` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="${p.stock < 5 ? 'text-red-500 font-bold' : 'text-gray-600'}">${p.stock}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <button onclick="editProduct(${p.id})" class="text-turquesa-600 hover:text-turquesa-800 mr-3"><i class="fas fa-edit"></i></button>
+                    <button onclick="confirmDelete('product', ${p.id})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function openProductModal(productId = null) {
+        const modal = document.getElementById('product-modal');
+        const form = document.getElementById('product-form');
+        const title = document.getElementById('product-modal-title');
+        
+        form.reset();
+        document.getElementById('sale-section').classList.add('hidden');
+        document.querySelectorAll('input[name="sizes"]').forEach(cb => cb.checked = false);
+        
+        if (productId) {
+            const product = products.find(p => p.id === productId);
+            document.getElementById('product-id').value = product.id;
+            document.getElementById('prod-name').value = product.name;
+            document.getElementById('prod-category').value = product.category;
+            document.getElementById('prod-price').value = product.price;
+            document.getElementById('prod-stock').value = product.stock;
+            document.getElementById('prod-sku').value = product.sku;
+            document.getElementById('prod-image').value = product.image;
+            document.getElementById('prod-description').value = product.description || '';
+            document.getElementById('prod-featured').checked = product.featured;
+            
+            product.sizes.forEach(size => {
+                const cb = document.querySelector(`input[name="sizes"][value="${size}"]`);
+                if (cb) cb.checked = true;
+            });
+            
+            if (product.onSale) {
+                document.getElementById('prod-on-sale').checked = true;
+                document.getElementById('sale-section').classList.remove('hidden');
+                document.getElementById('prod-discount-type').value = product.discountType;
+                document.getElementById('prod-discount-value').value = product.discountValue;
+                document.getElementById('prod-discount-code').value = product.discountCode || '';
+                calculateSalePrice();
+            }
+            
+            title.textContent = 'Editar Produto';
+            document.getElementById('save-product-text').textContent = 'Atualizar Produto';
+        } else {
+            document.getElementById('product-id').value = '';
+            title.textContent = 'Novo Produto';
+            document.getElementById('save-product-text').textContent = 'Guardar Produto';
+        }
+        
+        modal.classList.add('active');
+    }
+
+    function closeProductModal() {
+        document.getElementById('product-modal').classList.remove('active');
+    }
+
+    function toggleSaleSection() {
+        const checked = document.getElementById('prod-on-sale').checked;
+        document.getElementById('sale-section').classList.toggle('hidden', !checked);
+        if (checked) calculateSalePrice();
+    }
+
+    function calculateSalePrice() {
+        const price = parseFloat(document.getElementById('prod-price').value) || 0;
+        const type = document.getElementById('prod-discount-type').value;
+        const value = parseFloat(document.getElementById('prod-discount-value').value) || 0;
+        
+        document.getElementById('discount-symbol').textContent = type === 'percentage' ? '%' : '€';
+        
+        let salePrice = price;
+        let percent = 0;
+        
+        if (type === 'percentage') {
+            salePrice = price - (price * value / 100);
+            percent = value;
+        } else {
+            salePrice = price - value;
+            percent = price > 0 ? Math.round((value / price) * 100) : 0;
+        }
+        
+        document.getElementById('display-original-price').textContent = '€' + price.toFixed(2);
+        document.getElementById('display-sale-price').textContent = '€' + Math.max(0, salePrice).toFixed(2);
+        document.getElementById('display-discount-percent').textContent = percent + '% OFF';
+    }
+
+    function saveProduct() {
+        const id = document.getElementById('product-id').value;
+        const sizes = Array.from(document.querySelectorAll('input[name="sizes"]:checked')).map(cb => cb.value);
+        
+        const productData = {
+            name: document.getElementById('prod-name').value,
+            category: document.getElementById('prod-category').value,
+            price: parseFloat(document.getElementById('prod-price').value),
+            stock: parseInt(document.getElementById('prod-stock').value),
+            sku: document.getElementById('prod-sku').value,
+            image: document.getElementById('prod-image').value || 'https://images.unsplash.com/photo-1560506840-ec148e82a604?w=400',
+            description: document.getElementById('prod-description').value,
+            featured: document.getElementById('prod-featured').checked,
+            sizes: sizes,
+            onSale: document.getElementById('prod-on-sale').checked,
+            discountType: document.getElementById('prod-on-sale').checked ? document.getElementById('prod-discount-type').value : null,
+            discountValue: document.getElementById('prod-on-sale').checked ? parseFloat(document.getElementById('prod-discount-value').value) || 0 : 0,
+            discountCode: document.getElementById('prod-on-sale').checked ? document.getElementById('prod-discount-code').value || null : null
+        };
+        
+        if (productData.onSale) {
+            if (productData.discountType === 'percentage') {
+                productData.salePrice = productData.price - (productData.price * productData.discountValue / 100);
+            } else {
+                productData.salePrice = productData.price - productData.discountValue;
+            }
+        } else {
+            productData.salePrice = null;
+        }
+        
+        if (id) {
+            const index = products.findIndex(p => p.id == id);
+            products[index] = { ...products[index], ...productData };
+            showToast('Produto atualizado!');
+        } else {
+            productData.id = Math.max(...products.map(p => p.id), 0) + 1;
+            products.push(productData);
+            showToast('Produto criado!');
+        }
+        
+        closeProductModal();
+        loadAdminProducts();
+        loadShopProducts();
+        loadFeaturedProducts();
+        updateAdminDashboard();
+    }
+
+    function editProduct(id) {
+        openProductModal(id);
+    }
+
+    function loadAdminOrders() {
+        const tbody = document.getElementById('admin-orders-table');
+        tbody.innerHTML = orders.map(o => `
+            <tr class="hover:bg-gray-50 cursor-pointer transition" onclick="viewOrder('${o.id}')">
+                <td class="px-6 py-4 font-medium text-turquesa-600">${o.id}</td>
+                <td class="px-6 py-4">
+                    <p class="font-medium text-gray-800">${o.customer}</p>
+                    <p class="text-xs text-gray-500">${o.email}</p>
+                </td>
+                <td class="px-6 py-4 font-bold">€${o.total.toFixed(2)}</td>
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold ${o.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : o.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}">
+                        ${o.status === 'pending' ? 'Pendente' : o.status === 'completed' ? 'Concluído' : 'Processando'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function viewOrder(orderId) {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+        
+        document.getElementById('order-modal-id').textContent = order.id;
+        
+        const content = document.getElementById('order-details-content');
+        content.innerHTML = `
+            <div class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-sm text-gray-500">Cliente</p>
+                        <p class="font-bold text-gray-800">${order.customer}</p>
+                        <p class="text-sm text-gray-600">${order.email}</p>
+                        <p class="text-sm text-gray-600">${order.phone}</p>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <p class="text-sm text-gray-500">Data</p>
+                        <p class="font-bold text-gray-800">${order.date}</p>
+                        <p class="text-sm text-gray-600 mt-2">Estado: <span class="${order.status === 'pending' ? 'text-yellow-600' : 'text-green-600'} font-bold">${order.status === 'pending' ? 'Pendente' : 'Concluído'}</span></p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-3">Artigos</h3>
+                    <div class="space-y-2">
+                        ${order.items.map(item => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium">${item.name}</p>
+                                    <p class="text-sm text-gray-500">${item.size} x${item.qty}</p>
+                                </div>
+                                <span class="font-bold">€${(item.price * item.qty).toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="border-t pt-4">
+                    <div class="flex justify-between text-xl font-bold">
+                        <span>Total</span>
+                        <span class="text-turquesa-600">€${order.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('order-modal').classList.add('active');
+    }
+
+    function closeOrderModal() {
+        document.getElementById('order-modal').classList.remove('active');
+    }
+
+    function loadAdminDiscounts() {
+        const container = document.getElementById('admin-discounts-list');
+        container.innerHTML = discountCodes.map((d, index) => `
+            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-4">
+                    <span class="bg-turquesa-100 text-turquesa-700 px-3 py-1 rounded-full font-bold">${d.code}</span>
+                    <span class="text-gray-600">${d.type === 'percentage' ? d.value + '%' : '€' + d.value}</span>
+                    <span class="text-xs ${d.active ? 'text-green-600' : 'text-red-600'}">${d.active ? 'Ativo' : 'Inativo'}</span>
+                </div>
+                <button onclick="deleteDiscountCode(${index})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+            </div>
+        `).join('');
+    }
+
+    function addDiscountCode() {
+        const code = document.getElementById('new-discount-code').value.toUpperCase().trim();
+        const type = document.getElementById('new-discount-type').value;
+        const value = parseFloat(document.getElementById('new-discount-value').value);
+        
+        if (!code || !value) return;
+        
+        discountCodes.push({ code, type, value, active: true });
+        showToast('Código adicionado!');
+        
+        document.getElementById('new-discount-code').value = '';
+        document.getElementById('new-discount-value').value = '';
+        loadAdminDiscounts();
+    }
+
+    function deleteDiscountCode(index) {
+        discountCodes.splice(index, 1);
+        loadAdminDiscounts();
+        showToast('Código removido');
+    }
+
+    function confirmDelete(type, id) {
+        deleteType = type;
+        deleteId = id;
+        document.getElementById('confirm-modal').classList.add('active');
+    }
+
+    function closeConfirmModal() {
+        document.getElementById('confirm-modal').classList.remove('active');
+    }
+
+    document.getElementById('confirm-delete-btn').addEventListener('click', function() {
+        if (deleteType === 'product') {
+            products = products.filter(p => p.id !== deleteId);
+            loadAdminProducts();
+            loadShopProducts();
+            loadFeaturedProducts();
+            updateAdminDashboard();
+            showToast('Produto eliminado');
+        }
+        closeConfirmModal();
+    });
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-message').textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function initCharts() {
+        const salesCtx = document.getElementById('salesChart');
+        const productsCtx = document.getElementById('productsChart');
+        
+        if (salesCtx) {
+            new Chart(salesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                    datasets: [{
+                        label: 'Vendas (€)',
+                        data: [120, 190, 150, 250, 220, 300, 280],
+                        borderColor: '#14b8a6',
+                        backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+        
+        if (productsCtx) {
+            new Chart(productsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Menina', 'Menino', 'Conjuntos', 'Acessórios'],
+                    datasets: [{
+                        data: [30, 25, 20, 25],
+                        backgroundColor: ['#f472b6', '#60a5fa', '#fbbf24', '#a78bfa']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+    }
+	// Alterar estado da encomenda
+function updateOrderStatus(orderId, newStatus) {
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        order.status = newStatus;
+        loadAdminOrders(); // Recarrega a lista
+        showToast(`Encomenda ${orderId} atualizada para: ${getStatusText(newStatus)}`);
+    }
+}
+
+function getStatusText(status) {
+    const texts = {
+        'pending': 'Pendente',
+        'processing': 'Em Processamento',
+        'shipped': 'Enviada',
+        'completed': 'Concluída',
+        'cancelled': 'Cancelada'
+    };
+    return texts[status] || status;
+} 
+    // Fechar modais ao clicar fora
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('active');
+        }
+    }
+    function applyDiscountFromCart() {
+    const code = document.getElementById('cart-discount-input').value.toUpperCase();
+    
+    const found = discountCodes.find(d => d.code === code && d.active);
+
+    if (!found) {
+        showToast('Código inválido!');
+        return;
+    }
+
+    currentDiscount = found;
+    updateCartUI();
+    showToast('Desconto aplicado com sucesso!');
+}
+</script>
+    <footer class="bg-gray-900 text-white py-10 mt-20">
+  <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+    <div>
+      <h3 class="font-bold text-lg mb-3">Contactos</h3>
+      <p>Email: geral@mundobebe.pt</p>
+      <p>Telefone: +351 912 345 678</p>
+    </div>
+    <div>
+      <h3 class="font-bold text-lg mb-3">Guia de Tamanhos</h3>
+      <p>0-3M | 3-6M | 6-9M | 9-12M</p>
+    </div>
+    <div>
+      <h3 class="font-bold text-lg mb-3">Informações</h3>
+      <p>Envios em 24-48h</p>
+      <p>Devoluções até 14 dias</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>
